@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proje Seçim Sistemi</title>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .project { margin: 20px; cursor: pointer; }
+    .project.secilmedi { color: black; }
+    .project.secilen { color: gray; }
+  </style>
+</head>
+<body>
+  <h1>Projeler</h1>
+  <div id="projectList"></div>
+
+  <!-- Modal for name and number input -->
+  <div id="modal" style="display:none;">
+    <h2>Bilgilerinizi Giriniz</h2>
+    <label>Ad: <input type="text" id="ad" /></label><br/>
+    <label>Okul No: <input type="text" id="okulNo" /></label><br/>
+    <button onclick="saveData()">Kaydet</button>
+  </div>
+
+  <script>
+    // Firebase yapılandırması
+    const firebaseConfig = {
+      apiKey: "AIzaSyCJSqYgxLk9wz7vIGTUFnueTM-J8uxUc8Y",
+      databaseURL: "https://projee-1047c-default-rtdb.firebaseio.com/"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const projects = [
+      { title: 'Küçük Çocukların Televizyonu Yakından İzleme Problemi', secildi: false },
+      { title: 'Artırılmış Gerçeklik Kullanarak Ders Kitaplarının Canlandırılması', secildi: false },
+      { title: 'Büyüdüm Projesi, Bireyi Hayata Hazırlama', secildi: false },
+      { title: 'Çift Kanallı Görüntülerin Analizi', secildi: false }
+    ];
+
+    const projectListDiv = document.getElementById('projectList');
+
+    // Projeleri listele
+    function renderProjects() {
+      projectListDiv.innerHTML = '';
+      projects.forEach((project, index) => {
+        const projectDiv = document.createElement('div');
+        projectDiv.innerHTML = project.title + (project.secildi ? ' (Seçildi)' : '');
+        projectDiv.className = `project ${project.secildi ? 'secilen' : 'secilmedi'}`;
+        projectDiv.onclick = () => handleProjectClick(index);
+        projectListDiv.appendChild(projectDiv);
+      });
+    }
+
+    // Proje seçildiğinde tetiklenen fonksiyon
+    function handleProjectClick(index) {
+      if (projects[index].secildi) {
+        alert("Bu proje zaten seçildi!");
+        return;
+      }
+      selectedProjectIndex = index;
+      document.getElementById('modal').style.display = 'block';
+    }
+
+    let selectedProjectIndex = null;
+
+    // Kaydet butonuna basıldığında
+    function saveData() {
+      const ad = document.getElementById('ad').value;
+      const okulNo = document.getElementById('okulNo').value;
+
+      if (!ad || !okulNo) {
+        alert("Lütfen tüm bilgileri girin.");
+        return;
+      }
+
+      const ref = db.ref('kullanicilar/' + okulNo);
+      ref.get().then((snapshot) => {
+        if (snapshot.exists()) {
+          alert("Kullanıcı zaten kayıtlı.");
+        } else {
+          db.ref('kullanicilar/' + okulNo).set({
+            ad: ad,
+            okulNo: okulNo,
+            proje: projects[selectedProjectIndex].title
+          });
+          projects[selectedProjectIndex].secildi = true;
+          renderProjects();
+          document.getElementById('modal').style.display = 'none';
+        }
+      });
+    }
+
+    renderProjects(); // İlk sayfa yüklemesi
+  </script>
+</body>
+</html>
